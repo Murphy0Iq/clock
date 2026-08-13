@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- viewport-fit=cover обязателен для захода картинки под Dynamic Island -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- Полная маскировка под iOS -->
+    <!-- Перенастройка маскировки PWA для исправления бага WebKit с черным низом -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="TimeHacker">
     
     <title>Lock Screen</title>
     <style>
-        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
         
         html, body { 
-            margin: 0; padding: 0; 
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
             width: 100%; 
             height: 100%;
             overflow: hidden; 
@@ -22,20 +24,20 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
         }
         
-        /* Жесткая фиксация контейнера с запасом по высоте, чтобы перекрыть полосы */
+        /* inset: 0 заменяет высоты vh и принудительно пробивает черную полосу в WebApp */
         .lockscreen { 
-            position: fixed; 
-            top: -2vh; left: 0; right: 0; bottom: -5vh;
-            width: 100vw; 
-            height: 107vh; 
+            position: absolute; 
+            inset: 0;
+            width: 100%;
+            height: 100%;
             /* Твои обои без часов из папки GitHub */
             background: url('my_screen.png') center/cover no-repeat; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: flex-start;
-            /* Компенсируем сдвиг картинки, чтобы часы встали ровно под Dynamic Island */
-            padding-top: calc(env(safe-area-inset-top) + 48px);
+            /* Точная посадка часов под Dynamic Island */
+            padding-top: calc(env(safe-area-inset-top) + 40px);
             overflow: hidden;
             z-index: 1;
         }
@@ -64,7 +66,7 @@
             line-height: 0.9; 
         }
 
-        /* СКРЫТАЯ КНОПКА ФОНАРИКА (Поверх иконки на твоих обоях) */
+        /* Скрытая интерактивная зона для фонарика поверх твоих обоев */
         .flashlight-trigger {
             position: fixed;
             bottom: calc(env(safe-area-inset-bottom) + 48px);
@@ -77,27 +79,27 @@
             background: rgba(255,255,255,0.01); 
         }
 
-        /* СКРЫТЫЕ СЕНСОРНЫЕ ЗОНЫ */
+        /* НЕВИДИМЫЕ КНОПКИ УПРАВЛЕНИЯ ВРЕМЕНЕМ ДЛЯ ТЕБЯ */
         .trigger-left { position: fixed; top: 0; left: 0; width: 30%; height: 35%; z-index: 98; cursor: pointer; }
         .trigger-right { position: fixed; top: 0; right: 0; width: 30%; height: 35%; z-index: 98; cursor: pointer; }
-        .trigger-bottom { position: fixed; bottom: 0; left: 0; width: 100vw; height: 50vh; z-index: 97; cursor: pointer; }
+        .trigger-bottom { position: fixed; bottom: 0; left: 0; width: 100%; height: 50%; z-index: 97; cursor: pointer; }
         #hiddenInput { position: fixed; top: -100px; left: -100px; width: 1px; height: 1px; opacity: 0; z-index: 10000; }
         video { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- Скрытые триггеры управления временем -->
+    <!-- Скрытый пульт управления -->
     <div class="trigger-left" onclick="openSecretInput()"></div>
     <div class="trigger-right" onclick="setToFutureTime()"></div>
     <div class="trigger-bottom" onclick="rewindToPresent()"></div>
     <input type="text" id="hiddenInput" pattern="\d*" maxlength="4" oninput="updateStaticTime(this)">
 
-    <!-- Зона активации фонарика -->
+    <!-- Триггер для включения настоящего светодиода вспышки -->
     <div class="flashlight-trigger" onclick="toggleFlashlight()"></div>
     <video id="flashVideo" autoplay playsinline></video>
 
-    <!-- Экран блокировки -->
+    <!-- Экран фокуса -->
     <div class="lockscreen">
         <div class="clock-container">
             <div class="date" id="dateDisplay">Thu Aug 13</div>
@@ -113,10 +115,8 @@
         let timerInterval;
         let track = null;
 
-        // Блокируем любые попытки скролла страницы браузера, чтобы экран не дергался
-        document.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-        }, { passive: false });
+        // Полная блокировка сдвигов страницы
+        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
 
         function updateDate() {
             const now = new Date();
@@ -143,6 +143,7 @@
                 `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         }
 
+        // Аппаратное включение физической вспышки на iPhone
         async function toggleFlashlight() {
             try {
                 if (!track) {
@@ -157,7 +158,7 @@
                     track = null;
                 }
             } catch (err) {
-                console.log("Вспышка недоступна");
+                console.log("Вспышка поддерживается только на телефонах");
             }
         }
 
