@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- Маскировка под нативное приложение для скрытия Safari -->
+    <!-- Полная маскировка под iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TimeHacker">
@@ -14,33 +14,33 @@
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; }
         
-        /* Основной контейнер экрана */
+        /* Основной контейнер */
         .lockscreen { 
             position: relative; 
-            width: 100%; 
-            height: 100%; 
+            width: 100vw; 
+            height: 100vh; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: space-between; 
-            padding-top: calc(env(safe-area-inset-top) + 40px);
-            padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+            padding-top: calc(env(safe-area-inset-top) + 45px);
+            padding-bottom: calc(env(safe-area-inset-bottom) + 25px);
             overflow: hidden;
         }
 
-        /* ЗАДНИЙ СЛОЙ ОБOЕВ (За часами) */
+        /* ЗАДНИЙ СЛОЙ ОБОЕВ (За цифрами часов) */
         .bg-back {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://ibb.co') center/cover no-repeat;
+            background: url('https://r2.dev') center/cover no-repeat;
             z-index: 1;
         }
 
-        /* ЧАСЫ И ДАТА (Слой посередине) */
+        /* ЧАСЫ И ДАТА */
         .clock-container {
             position: relative;
             text-align: center;
             width: 100%;
-            z-index: 2; /* Выше заднего фона, но ниже переднего */
+            z-index: 2; 
         }
         
         .date { 
@@ -49,59 +49,58 @@
             font-weight: 500; 
             letter-spacing: -0.2px;
             margin-bottom: 2px;
-            opacity: 0.95;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         
-        /* Прозрачный стеклянный шрифт как на твоем скриншоте */
         .time { 
-            font-size: 102px; 
+            font-size: 104px; 
             font-weight: 700; 
             color: rgba(255, 255, 255, 0.45); 
             letter-spacing: -3px; 
             line-height: 0.9; 
-            backdrop-filter: blur(1px);
-            -webkit-backdrop-filter: blur(1px);
+            backdrop-filter: blur(0.5px);
+            -webkit-backdrop-filter: blur(0.5px);
         }
 
-        /* ПЕРЕДНИЙ СЛОЙ ОБОЕВ (Накладывается ПОВЕРХ часов для эффекта глубины) */
+        /* ПЕРЕДНИЙ СЛОЙ ОБОЕВ (Создает 3D-эффект наложения поверх часов) */
         .bg-front {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://ibb.co') center/cover no-repeat;
-            z-index: 3; /* Перекрывает нижнюю часть цифр часов */
-            pointer-events: none; /* Пропускает клики сквозь себя */
+            background: url('https://r2.dev') center/cover no-repeat;
+            z-index: 3; 
+            pointer-events: none; 
         }
 
-        /* ИНТЕРФЕЙС И ВИДЖЕТЫ (Самый верхний слой) */
+        /* ИНТЕРФЕЙС, ИКОНКИ И ВИДЖЕТЫ */
         .ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: space-between;
-            padding: calc(env(safe-area-inset-top) + 140px) 35px calc(env(safe-area-inset-bottom) + 50px);
+            padding: calc(env(safe-area-inset-top) + 145px) 35px calc(env(safe-area-inset-bottom) + 50px);
             z-index: 10;
             pointer-events: none;
         }
 
-        /* Виджеты под часами */
+        /* Сет-виджетов под часами */
         .widgets-row {
-            display: flex; justify-content: center; gap: 15px; margin-top: 10px;
+            display: flex; justify-content: center; gap: 15px;
             pointer-events: auto;
         }
-        .widget-img { height: 42px; opacity: 0.85; }
+        .widget-img { height: 44px; width: auto; opacity: 0.9; }
 
-        /* Нижняя панель с кнопками фонарика и камеры */
+        /* Фонарик и Камера */
         .bottom-row {
             display: flex; justify-content: space-between; align-items: center; width: 100%;
-            margin-bottom: 20px; pointer-events: auto;
+            margin-bottom: 15px; pointer-events: auto;
         }
-        .sys-btn { width: 50px; height: 50px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .sys-btn img { width: 22px; height: 22px; opacity: 0.9; }
+        .sys-btn { width: 50px; height: 50px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); }
+        .sys-btn img { width: 24px; height: 24px; opacity: 0.95; }
 
-        /* Домашняя полоса iOS в самом низу */
+        /* Полоска Home Bar в самом низу экрана */
         .home-bar {
             position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-            width: 140px; height: 5px; background: #fff; border-radius: 10px; z-index: 11;
+            width: 140px; height: 5px; background: rgba(255, 255, 255, 0.85); border-radius: 10px; z-index: 11;
         }
 
-        /* СКРЫТЫЕ ЗОНЫ КЛИКА ДЛЯ ТЕБЯ */
+        /* СКРЫТЫЕ СЕНСОРНЫЕ ЗОНЫ */
         .trigger-left { position: absolute; top: 0; left: 0; width: 30%; height: 35%; z-index: 998; cursor: pointer; }
         .trigger-right { position: absolute; top: 0; right: 0; width: 30%; height: 35%; z-index: 998; cursor: pointer; }
         .trigger-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 50%; z-index: 997; cursor: pointer; }
@@ -110,13 +109,13 @@
 </head>
 <body>
 
-    <!-- Скрытые триггеры -->
+    <!-- Скрытое управление фокусом -->
     <div class="trigger-left" onclick="openSecretInput()"></div>
     <div class="trigger-right" onclick="setToFutureTime()"></div>
     <div class="trigger-bottom" onclick="rewindToPresent()"></div>
     <input type="text" id="hiddenInput" pattern="\d*" maxlength="4" oninput="updateStaticTime(this)">
 
-    <!-- Обои и Часы -->
+    <!-- Картинка заднего плана -->
     <div class="bg-back"></div>
     
     <div class="lockscreen">
@@ -126,22 +125,20 @@
         </div>
     </div>
 
+    <!-- Передний 3D-план волны обоев -->
     <div class="bg-front"></div>
 
-    <!-- Графика системного интерфейса iOS (Иконки и виджеты с твоего скрина) -->
+    <!-- Виджеты и иконки нижнего уровня -->
     <div class="ui-layer">
         <div class="widgets-row">
-            <!-- Виджет погоды слева -->
-            <img src="https://ibb.co" class="widget-img">
-            <!-- Виджет батареи по центру -->
-            <img src="https://ibb.co" class="widget-img">
-            <!-- Виджет дома справа -->
-            <img src="https://ibb.co" class="widget-img">
+            <img src="https://r2.dev" class="widget-img">
+            <img src="https://r2.dev" class="widget-img">
+            <img src="https://r2.dev" class="widget-img">
         </div>
         
         <div class="bottom-row">
-            <div class="sys-btn"><img src="https://ibb.co"></div>
-            <div class="sys-btn"><img src="https://ibb.co"></div>
+            <div class="sys-btn"><img src="https://r2.dev"></div>
+            <div class="sys-btn"><img src="https://r2.dev"></div>
         </div>
     </div>
     
@@ -154,16 +151,11 @@
         let targetMinutes = 0;
         let timerInterval;
 
-        // Форматирование даты строго как на твоем скрине: Thu Aug 13
         function updateDate() {
             const now = new Date();
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const months = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-            
-            // Если месяц не август, код подставит текущий, но формат будет один в один
-            const currentMonthName = now.getMonth() === 7 ? 'Aug' : months[now.getMonth()];
-            
-            document.getElementById('dateDisplay').innerText = `${days[now.getDay()]} ${currentMonthName} ${now.getDate()}`;
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            document.getElementById('dateDisplay').innerText = `${days[now.getDay()]} ${months[now.getMonth()]} ${now.getDate()}`;
         }
         updateDate();
 
