@@ -14,110 +14,88 @@
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; }
         
-        /* Основной контейнер */
+        /* Твои личные обои из фотошопа на весь экран */
         .lockscreen { 
-            position: relative; 
+            position: fixed; 
+            top: 0; left: 0;
             width: 100vw; 
             height: 100vh; 
+            /* Подключаем твой личный скриншот из папки GitHub */
+            background: url('my_screen.png') center/cover no-repeat; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: space-between; 
-            padding-top: calc(env(safe-area-inset-top) + 45px);
-            padding-bottom: calc(env(safe-area-inset-bottom) + 25px);
+            justify-content: flex-start;
+            /* Точное позиционирование блока времени под Dynamic Island */
+            padding-top: calc(env(safe-area-inset-top) + 40px);
             overflow: hidden;
-        }
-
-        /* ЗАДНИЙ СЛОЙ ОБОЕВ (За цифрами часов) */
-        .bg-back {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://r2.dev') center/cover no-repeat;
             z-index: 1;
         }
 
-        /* ЧАСЫ И ДАТА */
+        /* ЧАСЫ И ДАТА С ПОЛНЫМ СОВПАДЕНИЕМ СТИЛЯ */
         .clock-container {
-            position: relative;
             text-align: center;
             width: 100%;
-            z-index: 2; 
+            margin-top: 5px;
         }
         
         .date { 
             font-size: 21px; 
             color: #fff; 
             font-weight: 500; 
-            letter-spacing: -0.2px;
-            margin-bottom: 2px;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            letter-spacing: -0.1px;
+            margin-bottom: 0px;
+            opacity: 0.95;
         }
         
+        /* Прозрачный стеклянный шрифт, один в один как на твоем оригинале */
         .time { 
-            font-size: 104px; 
+            font-size: 102px; 
             font-weight: 700; 
-            color: rgba(255, 255, 255, 0.45); 
+            color: rgba(255, 255, 255, 0.44); 
             letter-spacing: -3px; 
             line-height: 0.9; 
+            /* Легкое размытие для имитации стекла */
             backdrop-filter: blur(0.5px);
             -webkit-backdrop-filter: blur(0.5px);
         }
 
-        /* ПЕРЕДНИЙ СЛОЙ ОБОЕВ (Создает 3D-эффект наложения поверх часов) */
-        .bg-front {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://r2.dev') center/cover no-repeat;
-            z-index: 3; 
-            pointer-events: none; 
+        /* ИНТЕРАКТИВНАЯ КНОПКА ФОНАРИКА (Скрытая зона поверх кнопки на твоих обоях) */
+        .flashlight-trigger {
+            position: fixed;
+            /* Точные координаты левой нижней кнопки iPhone */
+            bottom: calc(env(safe-area-inset-bottom) + 48px);
+            left: 35px;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            z-index: 100;
+            cursor: pointer;
+            /* Для тестов на ПК можно сделать видимым, сменив background */
+            background: rgba(255,255,255,0.01); 
         }
 
-        /* ИНТЕРФЕЙС, ИКОНКИ И ВИДЖЕТЫ */
-        .ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: space-between;
-            padding: calc(env(safe-area-inset-top) + 145px) 35px calc(env(safe-area-inset-bottom) + 50px);
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        /* Сет-виджетов под часами */
-        .widgets-row {
-            display: flex; justify-content: center; gap: 15px;
-            pointer-events: auto;
-        }
-        .widget-img { height: 44px; width: auto; opacity: 0.9; }
-
-        /* Фонарик и Камера */
-        .bottom-row {
-            display: flex; justify-content: space-between; align-items: center; width: 100%;
-            margin-bottom: 15px; pointer-events: auto;
-        }
-        .sys-btn { width: 50px; height: 50px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); }
-        .sys-btn img { width: 24px; height: 24px; opacity: 0.95; }
-
-        /* Полоска Home Bar в самом низу экрана */
-        .home-bar {
-            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-            width: 140px; height: 5px; background: rgba(255, 255, 255, 0.85); border-radius: 10px; z-index: 11;
-        }
-
-        /* СКРЫТЫЕ СЕНСОРНЫЕ ЗОНЫ */
-        .trigger-left { position: absolute; top: 0; left: 0; width: 30%; height: 35%; z-index: 998; cursor: pointer; }
-        .trigger-right { position: absolute; top: 0; right: 0; width: 30%; height: 35%; z-index: 998; cursor: pointer; }
-        .trigger-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 50%; z-index: 997; cursor: pointer; }
-        #hiddenInput { position: absolute; top: -100px; left: -100px; width: 1px; height: 1px; opacity: 0; z-index: 10000; }
+        /* СКРЫТЫЕ СЕНСОРНЫЕ ЗОНЫ ДЛЯ УПРАВЛЕНИЯ ВРЕМЕНЕМ */
+        .trigger-left { position: fixed; top: 0; left: 0; width: 30%; height: 35%; z-index: 98; cursor: pointer; }
+        .trigger-right { position: fixed; top: 0; right: 0; width: 30%; height: 35%; z-index: 98; cursor: pointer; }
+        .trigger-bottom { position: fixed; bottom: 0; left: 0; width: 100vw; height: 50vh; z-index: 97; cursor: pointer; }
+        #hiddenInput { position: fixed; top: -100px; left: -100px; width: 1px; height: 1px; opacity: 0; z-index: 10000; }
+        video { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- Скрытое управление фокусом -->
+    <!-- Скрытые триггеры фокуса -->
     <div class="trigger-left" onclick="openSecretInput()"></div>
     <div class="trigger-right" onclick="setToFutureTime()"></div>
     <div class="trigger-bottom" onclick="rewindToPresent()"></div>
     <input type="text" id="hiddenInput" pattern="\d*" maxlength="4" oninput="updateStaticTime(this)">
 
-    <!-- Картинка заднего плана -->
-    <div class="bg-back"></div>
-    
+    <!-- Рабочая кнопка активации вспышки -->
+    <div class="flashlight-trigger" onclick="toggleFlashlight()"></div>
+    <video id="flashVideo" autoplay playsinline></video>
+
+    <!-- Основной контейнер времени -->
     <div class="lockscreen">
         <div class="clock-container">
             <div class="date" id="dateDisplay">Thu Aug 13</div>
@@ -125,32 +103,15 @@
         </div>
     </div>
 
-    <!-- Передний 3D-план волны обоев -->
-    <div class="bg-front"></div>
-
-    <!-- Виджеты и иконки нижнего уровня -->
-    <div class="ui-layer">
-        <div class="widgets-row">
-            <img src="https://r2.dev" class="widget-img">
-            <img src="https://r2.dev" class="widget-img">
-            <img src="https://r2.dev" class="widget-img">
-        </div>
-        
-        <div class="bottom-row">
-            <div class="sys-btn"><img src="https://r2.dev"></div>
-            <div class="sys-btn"><img src="https://r2.dev"></div>
-        </div>
-    </div>
-    
-    <div class="home-bar"></div>
-
     <script>
         let mode = "normal"; 
         let futureOffset = 10; 
         let targetHours = 0;
         let targetMinutes = 0;
         let timerInterval;
+        let track = null; // Для управления вспышкой
 
+        // Автоматический формат даты: Thu Aug 13
         function updateDate() {
             const now = new Date();
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -176,6 +137,31 @@
                 `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         }
 
+        // АКТИВАЦИЯ НАСТОЯЩЕГО ФОНАРИКА НА ТЕЛЕФОНЕ
+        async function toggleFlashlight() {
+            try {
+                if (!track) {
+                    // Запрашиваем доступ к камере для обращения к вспышке
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    const video = document.getElementById('flashVideo');
+                    video.srcObject = stream;
+                    track = stream.getVideoTracks()[0];
+                    
+                    // Включаем фонарик (torch)
+                    await track.applyConstraints({ advanced: [{ torch: true }] });
+                } else {
+                    // Выключаем фонарик
+                    await track.applyConstraints({ advanced: [{ torch: false }] });
+                    track.stop();
+                    track = null;
+                }
+            } catch (err) {
+                // Если запуск на ПК или нет вспышки, просто имитируем нажатие
+                console.log("Фонарик доступен только на смартфонах");
+            }
+        }
+
+        // Управление фокусом
         function openSecretInput() {
             if (mode !== "normal") return;
             mode = "static";
