@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- Полная маскировка под iOS при сохранении на экран Домой -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TimeHacker">
+    
+    <title>Time Hacker</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        
+        /* Экран блокировки с абстрактными обоями */
+        .lockscreen { 
+            position: relative; width: 100%; height: 100%; 
+            /* Ссылка на абстрактные обои (можешь заменить на свою прямую ссылку) */
+            background: url('https://psv4.vkuserphoto.ru/s/v1/d2/rg2mLRQ6NNOiG5cH4Rwc3IWyUTcqC9e_AO74TT5rzKjMYpLk4s8taNPBLwoDPW0K1bka_gyvv3ikwc6O4szOhgQ_B-d5vTOo0TQtnAKyTLHEnOicYFBx8S_RT2edaLwV9tiB5Lc6OHEv/img2_akspic_ru-yabloko-ios-apple-ios_17-ios_14-1242x2688.jpg') center/cover no-repeat; 
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between; 
+            padding: 90px 24px 60px; 
+        }
+        
+        /* Виджет стеклянных часов (Glassmorphism) */
+        .glass-clock-widget {
+            width: 100%;
+            max-width: 340px;
+            padding: 20px 10px;
+            background: rgba(255, 255, 255, 0.05); /* Легкая белая прозрачность */
+            backdrop-filter: blur(25px); /* Эффект сильного размытия стекла */
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Тонкая грань стекла */
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            z-index: 5;
+        }
+        
+        .time { font-size: 76px; font-weight: 700; color: #fff; letter-spacing: -2px; line-height: 1; text-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .date { font-size: 18px; color: rgba(255, 255, 255, 0.9); font-weight: 500; margin-bottom: 6px; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* Абсолютно невидимые сенсорные зоны для тебя */
+        .trigger-left { position: absolute; top: 0; left: 0; width: 30%; height: 30%; z-index: 998; }
+        .trigger-right { position: absolute; top: 0; right: 0; width: 30%; height: 30%; z-index: 998; }
+        .trigger-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 50%; z-index: 997; }
+
+        /* Скрытый инпут */
+        #hiddenInput { position: absolute; top: -100px; left: -100px; width: 1px; height: 1px; opacity: 0; z-index: 10000; }
+    </style>
+</head>
+<body>
+
+    <div class="lockscreen">
+        
+        <!-- Скрытые триггеры -->
+        <div class="trigger-left" onclick="openSecretInput()"></div>
+        <div class="trigger-right" onclick="setToFutureTime()"></div>
+        <div class="trigger-bottom" onclick="rewindToPresent()"></div>
+
+        <input type="text" id="hiddenInput" pattern="\d*" maxlength="4" oninput="updateStaticTime(this)">
+
+        <!-- Стеклянный виджет времени -->
+        <div class="glass-clock-widget">
+            <div class="date" id="dateDisplay">Четверг, 13 августа</div>
+            <div class="time" id="timeDisplay">05:35</div>
+        </div>
+        
+        <div style="color: rgba(255,255,255,0.4); font-size: 13px; z-index: 5; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;">Вверх для разблокировки</div>
+    </div>
+
+    <script>
+        let mode = "normal"; 
+        let futureOffset = 10; 
+        let targetHours = 0;
+        let targetMinutes = 0;
+        let timerInterval;
+
+        const options = { weekday: 'long', month: 'long', day: 'numeric' };
+        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('ru-RU', options);
+
+        function startClock() {
+            timerInterval = setInterval(() => {
+                if (mode === "normal") {
+                    const now = new Date();
+                    setTimeDisplay(now.getHours(), now.getMinutes());
+                } else if (mode === "future") {
+                    const futureTime = new Date(Date.now() + futureOffset * 60000);
+                    setTimeDisplay(futureTime.getHours(), futureTime.getMinutes());
+                }
+            }, 1000);
+        }
+
+        function setTimeDisplay(h, m) {
+            document.getElementById('timeDisplay').innerText = 
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function openSecretInput() {
+            if (mode !== "normal") return;
+            mode = "static";
+            const input = document.getElementById('hiddenInput');
+            input.value = "";
+            input.focus();
+        }
+
+        function updateStaticTime(input) {
+            let val = input.value;
+            if (val.length === 4) {
+                targetHours = parseInt(val.substring(0, 2));
+                targetMinutes = parseInt(val.substring(2, 4));
+                
+                if(targetHours > 23 || targetMinutes > 59) {
+                    input.value = "";
+                    return;
+                }
+                
+                setTimeDisplay(targetHours, targetMinutes);
+                input.blur();
+            }
+        }
+
+        function setToFutureTime() {
+            if (mode !== "static") return;
+            mode = "future";
+        }
+
+        function rewindToPresent() {
+            if (mode !== "future") return;
+            mode = "rewinding";
+            clearInterval(timerInterval);
+
+            let fakeTime = new Date(Date.now() + futureOffset * 60000);
+            let fakeTotalMinutes = fakeTime.getHours() * 60 + fakeTime.getMinutes();
+
+            function doRewind() {
+                const now = new Date();
+                const realTotalMinutes = now.getHours() * 60 + now.getMinutes();
+
+                if (fakeTotalMinutes <= realTotalMinutes) {
+                    mode = "normal";
+                    startClock(); 
+                    return;
+                }
+
+                fakeTotalMinutes--;
+                let h = Math.floor(fakeTotalMinutes / 60) % 24;
+                let m = fakeTotalMinutes % 60;
+                setTimeDisplay(h, m);
+
+                let diff = fakeTotalMinutes - realTotalMinutes;
+                let currentDelay = 80; 
+
+                if (diff <= 3) {
+                    currentDelay = 800; 
+                } else if (diff <= 6) {
+                    currentDelay = 400; 
+                } else if (diff <= 8) {
+                    currentDelay = 200; 
+                }
+
+                setTimeout(doRewind, currentDelay);
+            }
+
+            doRewind();
+        }
+
+        startClock();
+    </script>
+</body>
+</html>
