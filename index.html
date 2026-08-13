@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- Полная маскировка под iOS с прозрачным статус-баром -->
+    <!-- Полная маскировка под iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TimeHacker">
@@ -16,85 +16,58 @@
         html, body { 
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            width: 100%; 
-            height: 100%;
-            overflow: hidden; 
-            background: #000; 
+            width: 100%; height: 100%;
+            overflow: hidden; background: #000; 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
         }
         
-        /* Жесткое растяжение на 101% со сдвигом, перекрывающее любые баги WebKit сверху и снизу */
+        /* Растяжение обоев пиксель в пиксель без швов */
         .lockscreen { 
             position: absolute; 
-            top: -0.5vh;
-            left: -0.5vw;
-            width: 101vw;
-            height: 101vh;
-            /* Твои обои без часов из папки GitHub */
+            inset: 0;
+            width: 100%; height: 100%;
             background: url('my_screen.png') center/cover no-repeat; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start;
-            overflow: hidden;
-            z-index: 1;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            overflow: hidden; z-index: 1;
         }
 
-        /* КОНТЕЙНЕР ЧАСОВ И ДАТЫ */
-        .clock-container {
-            text-align: center;
-            width: 100%;
-            /* Фиксированный идеальный отступ под Dynamic Island */
-            margin-top: 105px; 
-        }
-        
-        .date { 
-            font-size: 21px; 
-            color: #fff; 
-            font-weight: 500; 
-            letter-spacing: -0.1px;
-            margin-bottom: 0px;
-            opacity: 0.95;
-        }
-        
-        .time { 
-            font-size: 102px; 
-            font-weight: 700; 
-            color: rgba(255, 255, 255, 0.44); 
-            letter-spacing: -3px; 
-            line-height: 0.9; 
-        }
+        .clock-container { text-align: center; width: 100%; margin-top: 105px; }
+        .date { font-size: 21px; color: #fff; font-weight: 500; letter-spacing: -0.1px; margin-bottom: 0px; opacity: 0.95; }
+        .time { font-size: 102px; font-weight: 700; color: rgba(255, 255, 255, 0.44); letter-spacing: -3px; line-height: 0.9; }
 
-        /* Скрытый триггер для реального фонарика */
+        /* ИНТЕРФЕЙС УПРАВЛЕНИЯ (Полностью невидимый) */
+        .clicker-zone { position: fixed; top: 0; left: 0; width: 100%; height: 40%; z-index: 999; display: flex; }
+        .btn-left { width: 33.3%; height: 100%; cursor: pointer; }
+        .btn-center { width: 33.3%; height: 100%; cursor: pointer; }
+        .btn-right { width: 33.4%; height: 100%; cursor: pointer; }
+        
+        /* Нижняя зона для отмотки времени назад */
+        .trigger-bottom { position: fixed; bottom: 0; left: 0; width: 100%; height: 55%; z-index: 997; cursor: pointer; }
+        
+        /* Скрытая кнопка настоящего фонарика поверх твоих обоев */
         .flashlight-trigger {
             position: fixed;
-            bottom: calc(env(safe-area-inset-bottom) + 48px);
-            left: 35px;
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            z-index: 100;
-            cursor: pointer;
+            bottom: calc(env(safe-area-inset-bottom) + 48px); left: 35px;
+            width: 54px; height: 54px; border-radius: 50%;
+            z-index: 1000; cursor: pointer;
             background: rgba(255,255,255,0.01); 
         }
-
-        /* СКРЫТЫЕ ЗОНЫ УПРАВЛЕНИЯ ВРЕМЕНЕМ */
-        .trigger-left { position: fixed; top: 0; left: 0; width: 30%; height: 35%; z-index: 98; cursor: pointer; }
-        .trigger-right { position: fixed; top: 0; right: 0; width: 30%; height: 35%; z-index: 98; cursor: pointer; }
-        .trigger-bottom { position: fixed; bottom: 0; left: 0; width: 100%; height: 50%; z-index: 97; cursor: pointer; }
-        #hiddenInput { position: fixed; top: -100px; left: -100px; width: 1px; height: 1px; opacity: 0; z-index: 10000; }
         video { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- Скрытый пульт управления -->
-    <div class="trigger-left" onclick="openSecretInput()"></div>
-    <div class="trigger-right" onclick="setToFutureTime()"></div>
-    <div class="trigger-bottom" onclick="rewindToPresent()"></div>
-    <input type="text" id="hiddenInput" pattern="\d*" maxlength="4" oninput="updateStaticTime(this)">
+    <!-- Скрытая панель кликов (Верхние 40% экрана) -->
+    <div class="clicker-zone">
+        <div class="btn-left" onclick="changeDecades()"></div>
+        <div class="btn-center" onclick="changeUnits()"></div>
+        <div class="btn-right" onclick="lockAndGoToFuture()"></div>
+    </div>
 
-    <!-- Кнопка фонарика -->
+    <!-- Нижняя половина экрана для запуска финального замедления -->
+    <div class="trigger-bottom" onclick="rewindToPresent()"></div>
+
+    <!-- Фонарик -->
     <div class="flashlight-trigger" onclick="toggleFlashlight()"></div>
     <video id="flashVideo" autoplay playsinline></video>
 
@@ -109,12 +82,13 @@
     <script>
         let mode = "normal"; 
         let futureOffset = 10; 
-        let targetHours = 0;
-        let targetMinutes = 0;
         let timerInterval;
         let track = null;
 
-        // Полная блокировка скролла страницы браузера
+        // Переменные для фиксации времени тапами
+        let currentH = 0;
+        let currentM = 0;
+
         document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
 
         function updateDate() {
@@ -127,9 +101,11 @@
 
         function startClock() {
             timerInterval = setInterval(() => {
+                const now = new Date();
                 if (mode === "normal") {
-                    const now = new Date();
-                    setTimeDisplay(now.getHours(), now.getMinutes());
+                    currentH = now.getHours();
+                    currentM = now.getMinutes();
+                    setTimeDisplay(currentH, currentM);
                 } else if (mode === "future") {
                     const futureTime = new Date(Date.now() + futureOffset * 60000);
                     setTimeDisplay(futureTime.getHours(), futureTime.getMinutes());
@@ -142,48 +118,40 @@
                 `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         }
 
-        async function toggleFlashlight() {
-            try {
-                if (!track) {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                    const video = document.getElementById('flashVideo');
-                    video.srcObject = stream;
-                    track = stream.getVideoTracks();
-                    await track.applyConstraints({ advanced: [{ torch: true }] });
-                } else {
-                    await track.applyConstraints({ advanced: [{ torch: false }] });
-                    track.stop();
-                    track = null;
-                }
-            } catch (err) {
-                console.log("Вспышка недоступна");
+        // МЕТОД ТАПОВ (Ввод времени без клавиатуры)
+        
+        // 1. Клики СЛЕВА: меняют первую цифру минут (Десятки: 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 0)
+        function changeDecades() {
+            if (mode !== "normal" && mode !== "edit") return;
+            mode = "edit";
+            let dec = Math.floor(currentM / 10);
+            let unit = currentM % 10;
+            dec = (dec + 1) > 5 ? 0 : dec + 1;
+            currentM = dec * 10 + unit;
+            setTimeDisplay(currentH, currentM);
+        }
+
+        // 2. Клики ПО ЦЕНТРУ: меняют вторую цифру минут (Единицы: 0 -> 1 -> 2 ... -> 9 -> 0)
+        function changeUnits() {
+            if (mode !== "normal" && mode !== "edit") return;
+            mode = "edit";
+            let dec = Math.floor(currentM / 10);
+            let unit = currentM % 10;
+            unit = (unit + 1) > 9 ? 0 : unit + 1;
+            currentM = dec * 10 + unit;
+            setTimeDisplay(currentH, currentM);
+        }
+
+        // 3. Клик СПРАВА: фиксирует время (первый шок), а при повторном клике переводит в Будущее (+10 мин)
+        function lockAndGoToFuture() {
+            if (mode === "edit") {
+                mode = "static"; // Фиксация названного времени девушки
+            } else if (mode === "static") {
+                mode = "future"; // Переключение на будущее время (+10 минут)
             }
         }
 
-        function openSecretInput() {
-            if (mode !== "normal") return;
-            mode = "static";
-            const input = document.getElementById('hiddenInput');
-            input.value = "";
-            input.focus();
-        }
-
-        function updateStaticTime(input) {
-            let val = input.value;
-            if (val.length === 4) {
-                targetHours = parseInt(val.substring(0, 2));
-                targetMinutes = parseInt(val.substring(2, 4));
-                if(targetHours > 23 || targetMinutes > 59) { input.value = ""; return; }
-                setTimeDisplay(targetHours, targetMinutes);
-                input.blur();
-            }
-        }
-
-        function setToFutureTime() {
-            if (mode !== "static") return;
-            mode = "future";
-        }
-
+        // ФИНАЛ: Медленный возврат времени (Клик по нижней части экрана)
         function rewindToPresent() {
             if (mode !== "future") return;
             mode = "rewinding";
@@ -217,6 +185,25 @@
                 setTimeout(doRewind, currentDelay);
             }
             doRewind();
+        }
+
+        // Аппаратный фонарик
+        async function toggleFlashlight() {
+            try {
+                if (!track) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    const video = document.getElementById('flashVideo');
+                    video.srcObject = stream;
+                    track = stream.getVideoTracks();
+                    await track.applyConstraints({ advanced: [{ torch: true }] });
+                } else {
+                    await track.applyConstraints({ advanced: [{ torch: false }] });
+                    track.stop();
+                    track = null;
+                }
+            } catch (err) {
+                console.log("Вспышка недоступна");
+            }
         }
 
         startClock();
