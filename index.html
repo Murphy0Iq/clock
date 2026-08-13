@@ -13,31 +13,29 @@
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         
-        /* Исправление бага высоты на iPhone */
         html, body { 
             margin: 0; padding: 0; 
             width: 100%; 
-            height: 100vh;
-            height: -webkit-fill-available;
-            height: 100dvh; 
+            height: 100%;
             overflow: hidden; 
             background: #000; 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; 
         }
         
-        /* Главный контейнер намертво растягивается по динамической высоте экрана */
+        /* Жесткая фиксация контейнера с запасом по высоте, чтобы перекрыть полосы */
         .lockscreen { 
             position: fixed; 
-            top: 0; left: 0; right: 0; bottom: 0;
-            width: 100%; 
-            height: 100dvh; 
-            /* Загрузка твоего отредактированного скриншота */
+            top: -2vh; left: 0; right: 0; bottom: -5vh;
+            width: 100vw; 
+            height: 107vh; 
+            /* Твои обои без часов из папки GitHub */
             background: url('my_screen.png') center/cover no-repeat; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: flex-start;
-            padding-top: calc(env(safe-area-inset-top) + 40px);
+            /* Компенсируем сдвиг картинки, чтобы часы встали ровно под Dynamic Island */
+            padding-top: calc(env(safe-area-inset-top) + 48px);
             overflow: hidden;
             z-index: 1;
         }
@@ -58,7 +56,6 @@
             opacity: 0.95;
         }
         
-        /* Точное соответствие цвета и шрифта с твоего скриншота */
         .time { 
             font-size: 102px; 
             font-weight: 700; 
@@ -67,7 +64,7 @@
             line-height: 0.9; 
         }
 
-        /* НЕВИДИМАЯ КНОПКА ФОНАРИКА (Поверх кнопки на твоих обоях) */
+        /* СКРЫТАЯ КНОПКА ФОНАРИКА (Поверх иконки на твоих обоях) */
         .flashlight-trigger {
             position: fixed;
             bottom: calc(env(safe-area-inset-bottom) + 48px);
@@ -80,23 +77,23 @@
             background: rgba(255,255,255,0.01); 
         }
 
-        /* СКРЫТЫЕ СЕНСОРНЫЕ ЗОНЫ ДЛЯ УПРАВЛЕНИЯ ВРЕМЕНЕМ */
+        /* СКРЫТЫЕ СЕНСОРНЫЕ ЗОНЫ */
         .trigger-left { position: fixed; top: 0; left: 0; width: 30%; height: 35%; z-index: 98; cursor: pointer; }
         .trigger-right { position: fixed; top: 0; right: 0; width: 30%; height: 35%; z-index: 98; cursor: pointer; }
-        .trigger-bottom { position: fixed; bottom: 0; left: 0; width: 100vw; height: 50dvh; z-index: 97; cursor: pointer; }
+        .trigger-bottom { position: fixed; bottom: 0; left: 0; width: 100vw; height: 50vh; z-index: 97; cursor: pointer; }
         #hiddenInput { position: fixed; top: -100px; left: -100px; width: 1px; height: 1px; opacity: 0; z-index: 10000; }
         video { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- Скрытые триггеры фокуса -->
+    <!-- Скрытые триггеры управления временем -->
     <div class="trigger-left" onclick="openSecretInput()"></div>
     <div class="trigger-right" onclick="setToFutureTime()"></div>
     <div class="trigger-bottom" onclick="rewindToPresent()"></div>
     <input type="text" id="hiddenInput" pattern="\d*" maxlength="4" oninput="updateStaticTime(this)">
 
-    <!-- Зона активации настоящего фонарика -->
+    <!-- Зона активации фонарика -->
     <div class="flashlight-trigger" onclick="toggleFlashlight()"></div>
     <video id="flashVideo" autoplay playsinline></video>
 
@@ -116,7 +113,11 @@
         let timerInterval;
         let track = null;
 
-        // Автоматический формат даты: Thu Aug 13
+        // Блокируем любые попытки скролла страницы браузера, чтобы экран не дергался
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+
         function updateDate() {
             const now = new Date();
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -142,7 +143,6 @@
                 `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         }
 
-        // Логика включения вспышки на iPhone
         async function toggleFlashlight() {
             try {
                 if (!track) {
@@ -157,11 +157,10 @@
                     track = null;
                 }
             } catch (err) {
-                console.log("Фонарик поддерживается только на мобильных устройствах");
+                console.log("Вспышка недоступна");
             }
         }
 
-        // Тайные триггеры времени
         function openSecretInput() {
             if (mode !== "normal") return;
             mode = "static";
